@@ -1,0 +1,61 @@
+body{
+  background-color: black;
+  color: white;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+#boards{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.board{
+  border: 1px solid white;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  height: max-content;
+}
+.row{
+  display: flex;
+  flex: row;
+}
+
+.row div{
+  border: 1px solid white;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.hit{
+  background-color: red;
+}
+.sunk{
+  background-color: green;
+}
+
+.miss{
+  background-color: white;
+  color: black;
+}
+
+.ship{
+  background-color: darkblue;
+}
+
+#enemy, #player{
+  text-wrap: wrap;
+  max-width: min-content;
+}
+
+h1{
+  text-align: center;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="index.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+  <title>Document</title>
+</head>
+<body>
+
+  <div id="content">
+    <fieldset id="lobby">
+      <legend>Lobby</legend>
+      <ul hx-get="/lobby" hx-trigger="every 1s"></ul>
+    </fieldset>
+    <fieldset id="config">
+      <legend>
+        Config
+      </legend>
+      <form action="/start_game" method="POST">
+        <input type="text" placeholder="name" name="name">
+        <input type="text" placeholder="description" name="desc">
+        <label for="autoplay">Autoplay</label>
+        <input type="checkbox" name="autoplay" id="autoplay">
+        <label for="wpbot">WPbot</label>
+        <input type="checkbox" name="wpbot" onclick="toggleDisable()" id="wpbot">
+        <input type="text" placeholder="target" name="target" id="target" disabled>
+        <input type="submit" value="submit" name="submit">
+      </form>
+    </fieldset>
+  </div>
+  <script>
+    function toggleDisable(){
+      let target = document.getElementById("target")
+      let wpbot = document.getElementById("wpbot")
+      if (wpbot.checked){
+        target.disabled = true;
+        if (!target.classList.contains("hidden")){
+          target.classList.add("hidden")
+        }
+      } else {
+        target.disabled = false;
+        if (target.classList.contains("hidden")){
+          target.classList.remove("hidden")
+        }
+      }
+    }
+    toggleDisable();
+
+  </script>
+  
+</body>
+</html>
