@@ -29,6 +29,10 @@
         <input type="submit" value="submit" name="submit">
       </form>
     </fieldset>
+    <fieldset id="top10">
+      <legend>Top 10</legend>
+      <ul hx-get="/stats" hx-trigger="every 1s"></ul>
+    </fieldset>
   </div>
   <script>
     function toggleDisable(){

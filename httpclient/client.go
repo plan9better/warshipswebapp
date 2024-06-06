@@ -42,7 +42,6 @@ func (c *HttpClient) makeRequest(endpoint string, v any, method string, payload 
 	var body []byte
 	isCritical := false
 	for !isCritical {
-		// log.Println("Making a request to ", endpoint)
 		resp, err := c.Client.Do(req)
 		if err != nil {
 			log.Printf("Error sending a get request to %s\n", endpoint)
@@ -115,7 +114,7 @@ func (c *HttpClient) GetGameStatus() (GameStatus, error) {
 	var status GameStatus
 	err := c.makeRequest("game", &status, "GET", nil)
 	tryCounter := 1
-	for err != nil && tryCounter < 5 {
+	for err != nil {
 		log.Printf("Error getting game status: %s, retrying %d time\n", err, tryCounter)
 		err = c.makeRequest("game", &status, "GET", nil)
 		return status, err
@@ -143,7 +142,7 @@ func (c *HttpClient) GetDesc() (Desc, error) {
 	time.Sleep(3 * time.Second)
 	var desc Desc
 	tryCounter := 1
-	for desc.Opp_Desc == "" && tryCounter < 5 {
+	for desc.Opp_Desc == "" {
 		err := c.makeRequest("game/desc", &desc, "GET", nil)
 		if err != nil {
 			log.Println("Error getting description: ", err)
@@ -237,6 +236,7 @@ func (c *HttpClient) Stats() []Stat {
 	type stats struct {
 		Stats []Stat `json:"stats"`
 	}
+
 	var s stats
 	err := c.makeRequest("stats", &s, "GET", nil)
 	if err != nil {
@@ -287,5 +287,6 @@ func (c *HttpClient) Abandon() {
 	req, _ := http.NewRequest("DELETE", "https://go-pjatk-server.fly.dev/api/abandon", nil)
 	req.Header.Add("X-Auth-Token", c.AuthToken)
 	c.Client.Do(req)
+	fmt.Println("abandoning with token: ", c.AuthToken)
 
 }

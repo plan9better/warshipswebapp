@@ -14,9 +14,9 @@
   <div hx-post="/check_turn" hx-trigger="every 200ms"></div>
   <div id="boards">
     <div id="enemy">
-      <h1>Wpbot</h1>
-      <h2>Latający Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit ut veritatis error natus delectus enim sunt voluptatibus quidem. Praesentium, optio.</h2>
-      <div class="board">
+      <div hx-post="/enemyInfo" hx-trigger="every 2s">
+      </div>
+      <div class="board" id="enemy_board">
         <div class="row">
           <div name="A1" hx-post="/fire">
             A1
@@ -143,9 +143,10 @@
         </div>
       </div>
     </div>
+    <h1 hx-post="/timeLeft" hx-trigger="every 1s"></h1>
     <div id="player" >
-      <h1>Ty</h1>
-      <p>Twój opis</p>
+      <div hx-post="/playerInfo" hx-trigger="every 2s">
+      </div>
       <div class="board" hx-post="/player_board" hx-trigger="every 200ms" hx-swap="innerHTML">
       <div class="row">
         <div>A1</div>
@@ -269,6 +270,8 @@
  </div>     </div>
     </div>
   </div>
+<div id="abandon" hx-post="/abandon" >Abandon game</div>
+<div id="shotStat" hx-post="/shotStats" hx-trigger="every 1s">Stats</div>
 
 </body>
 

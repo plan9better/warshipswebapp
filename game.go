@@ -20,7 +20,7 @@ func updateStatus(httpc *httpclient.HttpClient, p *player) {
 	p.Status, _ = httpc.GetGameStatus()
 	p.P.Unlock()
 }
-func updateBoard(httpc *httpclient.HttpClient, p *player) {
+func updateBoard(p *player) {
 	p.P.Lock()
 	for _, v := range p.Status.OpponentShots {
 		if p.Player[v] == "ship" || p.Player[v] == "hit" || p.Player[v] == "sunk" {
@@ -28,9 +28,25 @@ func updateBoard(httpc *httpclient.HttpClient, p *player) {
 		} else {
 			p.Player[v] = "miss"
 		}
-		// fmt.Println(p.Player)
 	}
 	p.P.Unlock()
+}
+
+func player_player(httpc *httpclient.HttpClient, p *player) {
+	get_player_ships(httpc, p)
+	updateStatus(httpc, p)
+
+	for p.Status.GameStatus != "ended" {
+		updateStatus(httpc, p)
+		for !p.Status.ShouldFire && p.Status.GameStatus != "ended" {
+			time.Sleep(1 * time.Second)
+			updateStatus(httpc, p)
+		}
+
+		updateBoard(p)
+		time.Sleep(1 * time.Second)
+	}
+	updateBoard(p)
 }
 
 func player_bot(httpc *httpclient.HttpClient, p *player) {
@@ -44,8 +60,8 @@ func player_bot(httpc *httpclient.HttpClient, p *player) {
 			updateStatus(httpc, p)
 		}
 
-		updateBoard(httpc, p)
+		updateBoard(p)
 		time.Sleep(1 * time.Second)
 	}
-	updateBoard(httpc, p)
+	updateBoard(p)
 }

@@ -11,21 +11,24 @@ import (
 var httpc *httpclient.HttpClient
 
 type player struct {
-	Player map[string]string
-	P      sync.Mutex
-	End    bool
-	Status httpclient.GameStatus
+	Player  map[string]string
+	P       sync.Mutex
+	End     bool
+	Status  httpclient.GameStatus
+	ShotSum int
+	HitSum  int
+	Time    int
 }
 
-// type enemy struct {
-// 	enemy map[string]string
-// 	e     sync.Mutex
-// }
-// var e enemy
+var desc httpclient.Desc
+
+type enemy struct {
+	enemy map[string]string
+}
+
+var e enemy
 
 var p player
-
-// var enemy_board map[string]string
 
 func start_game(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -64,13 +67,19 @@ func start_game(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	e.enemy = make(map[string]string)
+
 	fmt.Println("redirecting")
 	switch gameType {
 	case 1:
-		http.Redirect(w, r, "/game_player_bot", http.StatusSeeOther)
-	default:
-		resp = `<h1>Error: game type not bot_bot</h1>`
-		w.Write([]byte(resp))
+		http.Redirect(w, r, "/game_bot", http.StatusSeeOther)
+	case 2:
+		http.Redirect(w, r, "/game_player", http.StatusSeeOther)
+	case 3:
+		http.Redirect(w, r, "/game_player", http.StatusSeeOther)
+	case 4:
+		http.Redirect(w, r, "/inlobby", http.StatusSeeOther)
+
 		return
 	}
 
@@ -91,15 +100,27 @@ func check_turn(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(res))
 }
 
+func top10(w http.ResponseWriter, r *http.Request) {
+	stats := httpc.Stats()
+	statshtml := ""
+	statshtml += "<table class=\"stats\">"
+	statshtml += "<tr><td>Nick</td><td>Games</td><td>Points</td><td>Rank</td><td>Wins</td></tr>"
+	for _, v := range stats {
+		statshtml += "</tr>"
+		statshtml += fmt.Sprintf("<td>%s</td>", v.Nick)
+		statshtml += fmt.Sprintf("<td>%d</td>", v.Games)
+		statshtml += fmt.Sprintf("<td>%d</td>", v.Points)
+		statshtml += fmt.Sprintf("<td>%d</td>", v.Rank)
+		statshtml += fmt.Sprintf("<td>%d</td>", v.Wins)
+		statshtml += "</tr>"
+	}
+	w.Write([]byte(statshtml))
+}
 func lobby(w http.ResponseWriter, r *http.Request) {
 	lobby := httpc.GetLobby()
 	lobbyhtml := ""
 	for _, v := range lobby {
-		lobbyhtml += `<p class="lobby_entry">`
-		lobbyhtml += v.Nick
-		lobbyhtml += ":"
-		lobbyhtml += v.GameStatus
-		lobbyhtml += `</p>`
+		lobbyhtml += fmt.Sprintf("<p class=\"lobby_entry\">%s: %s</p>", v.Nick, v.GameStatus)
 	}
 	w.Write([]byte(lobbyhtml))
 }
@@ -110,15 +131,49 @@ func fire(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("error firing"))
 	}
-	res := `<div class="` + effect + `">` + field + `</div>`
+	res := fmt.Sprintf("<div class=\"%s\">%s</div>", effect, field)
+	e.enemy[effect] = field
+
+	p.ShotSum += 1
+	if effect == "sunk" || effect == "hit" {
+		p.HitSum += 1
+	}
+	fmt.Println(res)
+	p.Time = 60
+
 	w.Write([]byte(res))
 
 }
+func shotStats(w http.ResponseWriter, r *http.Request) {
+	var percent float64
+	if p.ShotSum > 0 {
+		percent = (float64(p.HitSum) / float64(p.ShotSum)) * 100
+	} else {
+		percent = 0
+	}
+	res := fmt.Sprintf("<p id=\"shotStat\">%f%%</p>", percent)
+	w.Write([]byte(res))
+}
 
-func game_player_bot(w http.ResponseWriter, r *http.Request) {
+func timeLeft(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(fmt.Sprintf("%d", p.Time)))
+}
+func game_player(w http.ResponseWriter, r *http.Request) {
+	go func() {
+		for desc.Desc == "" || desc.Nick == "" || desc.Opp_Desc == "" || desc.Opponent == "" {
+			desc, _ = httpc.GetDesc()
+			time.Sleep(3 * time.Second)
+		}
+	}()
+	p.Time = 60
 	p.End = false
+	go func() {
+		for !p.End {
+			p.Time -= 1
+			time.Sleep(1 * time.Second)
+		}
+	}()
 	p.Player = make(map[string]string)
-	// go get_player_ships(httpc, &p)
 	go player_bot(httpc, &p)
 	http.ServeFile(w, r, "./static/board.html")
 }
@@ -126,16 +181,39 @@ func game_player_bot(w http.ResponseWriter, r *http.Request) {
 func player_board(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(Board_to_html(p.Player)))
 }
+func abandon(w http.ResponseWriter, r *http.Request) {
+	httpc.Abandon()
+	w.Write([]byte("Game abandoned"))
+	p.End = true
+}
+
+func enemyInfo(w http.ResponseWriter, r *http.Request) {
+	desc, _ := httpc.GetDesc()
+	res := fmt.Sprintf("<h1>%s</h1>", desc.Opponent)
+	res += fmt.Sprintf("<h2>%s</h2>", desc.Opp_Desc)
+	w.Write([]byte(res))
+}
+func playerInfo(w http.ResponseWriter, r *http.Request) {
+	res := fmt.Sprintf("<h1>%s</h1>", desc.Nick)
+	res += fmt.Sprintf("<h2>%s</h2>", desc.Desc)
+	w.Write([]byte(res))
+}
 
 func main() {
 	httpc = &httpclient.HttpClient{
 		Client: &http.Client{Timeout: time.Second * 20},
 	}
+	http.HandleFunc("/timeLeft", timeLeft)
 	http.HandleFunc("/fire", fire)
+	http.HandleFunc("/enemyInfo", enemyInfo)
+	http.HandleFunc("/playerInfo", playerInfo)
+	http.HandleFunc("/abandon", abandon)
 	http.HandleFunc("/check_turn", check_turn)
-	http.HandleFunc("/game_player_bot", game_player_bot)
+	http.HandleFunc("/game_player", game_player)
 	http.HandleFunc("/start_game", start_game)
 	http.HandleFunc("/lobby", lobby)
+	http.HandleFunc("/stats", top10)
+	http.HandleFunc("/shotStats", shotStats)
 	http.HandleFunc("/player_board", player_board)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.ListenAndServe(":3000", nil)

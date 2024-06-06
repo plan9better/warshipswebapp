@@ -18,7 +18,7 @@ body{
 }
 #config{
   height: 400px;
-  margin-right: 200px;
+  /* margin-right: 200px; */
 }
 input{
   background-color: black;
@@ -42,4 +42,15 @@ input{
   background-color: white;
   color: black;
   cursor: pointer;
+}
+
+#top10{
+  border-radius: 10px;
+  width: 450px;
+  display: inline;
+}
+#content{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
