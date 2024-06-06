@@ -50,12 +50,6 @@ type Player struct {
 	HasLastMove    bool
 }
 
-// const (
-// 	hit  = 0
-// 	miss = 1
-// 	sunk = 2
-// )
-
 func IsSame(cord1 Coord, cord2 Coord) bool {
 	if cord1.X == cord1.Y && cord2.X == cord2.Y {
 		return true

@@ -23,14 +23,36 @@ func updateStatus(httpc *httpclient.HttpClient, p *player) {
 func updateBoard(httpc *httpclient.HttpClient, p *player) {
 	p.P.Lock()
 	for _, v := range p.Status.OpponentShots {
-		if p.Player[v] == "ship" || p.Player[v] == "hit" || p.Player[v] == "sunk" {
+		if p.Player[v] == "ship" || p.Player[v] == "hit" {
 			p.Player[v] = "hit"
 		} else {
 			p.Player[v] = "miss"
 		}
-		// fmt.Println(p.Player)
 	}
+
 	p.P.Unlock()
+}
+
+func updateEnemyBoard(e *enemy) {
+
+	// sink entire ships not just the last part
+	for crd, effect := range e.enemy {
+		coord := strToCoord(crd)
+		tries := 0
+		for effect == "sunk" && tries < 5 {
+			adj := FindAdjacent(coord)
+			for _, val := range adj {
+				strval := val.toString()
+				if e.enemy[strval] == "hit" || e.enemy[strval] == "sunk" {
+					e.enemy[strval] = "sunk"
+					coord = val
+				} else {
+					e.enemy[strval] = "miss"
+				}
+			}
+			tries++
+		}
+	}
 }
 
 func player_bot(httpc *httpclient.HttpClient, p *player) {

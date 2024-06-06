@@ -17,15 +17,14 @@ type player struct {
 	Status httpclient.GameStatus
 }
 
-// type enemy struct {
-// 	enemy map[string]string
-// 	e     sync.Mutex
-// }
-// var e enemy
+type enemy struct {
+	enemy map[string]string
+	e     sync.Mutex
+}
+
+var e enemy
 
 var p player
-
-// var enemy_board map[string]string
 
 func start_game(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
@@ -106,10 +105,13 @@ func lobby(w http.ResponseWriter, r *http.Request) {
 
 func fire(w http.ResponseWriter, r *http.Request) {
 	field := r.Header.Get("Hx-Trigger-Name")
+	fmt.Println(field)
 	effect, err := httpc.Fire(field)
+	e.enemy[field] = effect
 	if err != nil {
 		w.Write([]byte("error firing"))
 	}
+	updateEnemyBoard(&e)
 	res := `<div class="` + effect + `">` + field + `</div>`
 	w.Write([]byte(res))
 
@@ -118,9 +120,14 @@ func fire(w http.ResponseWriter, r *http.Request) {
 func game_player_bot(w http.ResponseWriter, r *http.Request) {
 	p.End = false
 	p.Player = make(map[string]string)
-	// go get_player_ships(httpc, &p)
+	e.enemy = make(map[string]string)
 	go player_bot(httpc, &p)
 	http.ServeFile(w, r, "./static/board.html")
+}
+
+func enemy_board(w http.ResponseWriter, r *http.Request) {
+	res := Enemy_board_to_html(e.enemy)
+	w.Write([]byte(res))
 }
 
 func player_board(w http.ResponseWriter, r *http.Request) {
@@ -137,6 +144,7 @@ func main() {
 	http.HandleFunc("/start_game", start_game)
 	http.HandleFunc("/lobby", lobby)
 	http.HandleFunc("/player_board", player_board)
+	http.HandleFunc("/enemy_board", enemy_board)
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.ListenAndServe(":3000", nil)
 }
