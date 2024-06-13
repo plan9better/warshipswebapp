@@ -28,11 +28,7 @@ func ChooseGameType(cfg httpclient.GameConfig, autoplay bool) int {
 }
 
 func ParseAutoplay(autoplay string) bool {
-	if autoplay == "on" {
-		return true
-	} else {
-		return false
-	}
+	return autoplay == "on"
 }
 func Enemy_board_to_html(board map[string]string) string {
 	html := ""

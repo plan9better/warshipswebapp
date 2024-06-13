@@ -27,7 +27,11 @@ func (c *HttpClient) makeRequest(endpoint string, v any, method string, payload 
 	var body []byte
 
 	isCritical := false
+<<<<<<< HEAD
 	for tries := 1; (tries <= MAX_TRIES) && (!isCritical); tries++ {
+=======
+	for !isCritical {
+>>>>>>> fkonkol-generate_boards_dynamically
 		resp, err := c.Client.Do(req)
 		if err != nil {
 			log.Printf("Error sending a get request to %s\n", endpoint)
@@ -112,9 +116,16 @@ func handleHTTPCodes(code int, body []byte, endpoint string) bool {
 func (c *HttpClient) GetGameStatus() (GameStatus, error) {
 	var status GameStatus
 	err := c.makeRequest("game", &status, "GET", nil)
+<<<<<<< HEAD
 
 	for err != nil {
 		log.Println("Error getting game status: ", err)
+=======
+	tryCounter := 1
+	for err != nil {
+		log.Printf("Error getting game status: %s, retrying %d time\n", err, tryCounter)
+		err = c.makeRequest("game", &status, "GET", nil)
+>>>>>>> fkonkol-generate_boards_dynamically
 		return status, err
 	}
 
@@ -123,9 +134,14 @@ func (c *HttpClient) GetGameStatus() (GameStatus, error) {
 
 func (c *HttpClient) GetDesc() (Desc, error) {
 	var desc Desc
+<<<<<<< HEAD
 
 	for desc.Opp_Desc == "" {
 		time.Sleep(time.Second)
+=======
+	tryCounter := 1
+	for desc.Opp_Desc == "" {
+>>>>>>> fkonkol-generate_boards_dynamically
 		err := c.makeRequest("game/desc", &desc, "GET", nil)
 		if err != nil {
 			log.Println("Error getting description: ", err)
@@ -206,6 +222,7 @@ func (c *HttpClient) Stats() []Stat {
 	type stats struct {
 		Stats []Stat `json:"stats"`
 	}
+
 	var s stats
 	err := c.makeRequest("stats", &s, "GET", nil)
 	if err != nil {
@@ -256,5 +273,6 @@ func (c *HttpClient) Abandon() {
 	req, _ := http.NewRequest("DELETE", "https://go-pjatk-server.fly.dev/api/abandon", nil)
 	req.Header.Add("X-Auth-Token", c.AuthToken)
 	c.Client.Do(req)
+	fmt.Println("abandoning with token: ", c.AuthToken)
 
 }
