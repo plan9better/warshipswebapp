@@ -105,7 +105,10 @@ func lobby(w http.ResponseWriter, r *http.Request) {
 
 func fire(w http.ResponseWriter, r *http.Request) {
 	field := r.Header.Get("Hx-Trigger-Name")
-	fmt.Println(field)
+	if !p.Status.ShouldFire {
+		return
+	}
+
 	effect, err := httpc.Fire(field)
 	e.enemy[field] = effect
 	if err != nil {
@@ -113,6 +116,10 @@ func fire(w http.ResponseWriter, r *http.Request) {
 	}
 	updateEnemyBoard(&e)
 	res := `<div class="` + effect + `">` + field + `</div>`
+
+	if effect == "miss" {
+		p.Status.ShouldFire = false
+	}
 	w.Write([]byte(res))
 
 }
