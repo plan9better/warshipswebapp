@@ -20,16 +20,10 @@ type player struct {
 	Time    int
 }
 
-<<<<<<< HEAD
-type enemy struct {
-	enemy map[string]string
-	e     sync.Mutex
-=======
 var desc httpclient.Desc
 
 type enemy struct {
 	enemy map[string]string
->>>>>>> fkonkol-generate_boards_dynamically
 }
 
 var e enemy
@@ -142,25 +136,35 @@ func fire(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("error firing"))
 	}
-<<<<<<< HEAD
-	updateEnemyBoard(&e)
-	res := `<div class="` + effect + `">` + field + `</div>`
+	for crd, effect := range e.enemy {
+		coord := strToCoord(crd)
+		tries := 0
+		for effect == "sunk" && tries < 5 {
+			adj := FindAdjacent(coord)
+			for _, val := range adj {
+				strval := val.toString()
+				if e.enemy[strval] == "hit" || e.enemy[strval] == "sunk" {
+					e.enemy[strval] = "sunk"
+					coord = val
+				} else {
+					e.enemy[strval] = "miss"
+				}
+			}
+			tries++
+		}
+	}
 
 	if effect == "miss" {
 		p.Status.ShouldFire = false
 	}
-=======
 	res := fmt.Sprintf("<div class=\"%s\">%s</div>", effect, field)
-	e.enemy[effect] = field
 
 	p.ShotSum += 1
 	if effect == "sunk" || effect == "hit" {
 		p.HitSum += 1
 	}
-	fmt.Println(res)
 	p.Time = 60
 
->>>>>>> fkonkol-generate_boards_dynamically
 	w.Write([]byte(res))
 
 }
@@ -171,7 +175,7 @@ func shotStats(w http.ResponseWriter, r *http.Request) {
 	} else {
 		percent = 0
 	}
-	res := fmt.Sprintf("<p id=\"shotStat\">%f%%</p>", percent)
+	res := fmt.Sprintf("<p id=\"shotStat\">%.2f%%</p>", percent)
 	w.Write([]byte(res))
 }
 
@@ -179,32 +183,23 @@ func timeLeft(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("%d", p.Time)))
 }
 func game_player(w http.ResponseWriter, r *http.Request) {
-	go func() {
-		for desc.Desc == "" || desc.Nick == "" || desc.Opp_Desc == "" || desc.Opponent == "" {
-			desc, _ = httpc.GetDesc()
-			time.Sleep(3 * time.Second)
-		}
-	}()
+	desc, _ = httpc.GetDesc()
 	p.Time = 60
 	p.End = false
 	go func() {
-		for !p.End {
+		for p.Status.GameStatus != "ended" {
 			p.Time -= 1
 			time.Sleep(1 * time.Second)
 		}
 	}()
 	p.Player = make(map[string]string)
-<<<<<<< HEAD
 	e.enemy = make(map[string]string)
-=======
->>>>>>> fkonkol-generate_boards_dynamically
 	go player_bot(httpc, &p)
 	http.ServeFile(w, r, "./static/board.html")
 }
 
 func enemy_board(w http.ResponseWriter, r *http.Request) {
-	res := Enemy_board_to_html(e.enemy)
-	w.Write([]byte(res))
+	w.Write([]byte(Enemy_board_to_html(e.enemy)))
 }
 
 func player_board(w http.ResponseWriter, r *http.Request) {
@@ -217,7 +212,6 @@ func abandon(w http.ResponseWriter, r *http.Request) {
 }
 
 func enemyInfo(w http.ResponseWriter, r *http.Request) {
-	desc, _ := httpc.GetDesc()
 	res := fmt.Sprintf("<h1>%s</h1>", desc.Opponent)
 	res += fmt.Sprintf("<h2>%s</h2>", desc.Opp_Desc)
 	w.Write([]byte(res))

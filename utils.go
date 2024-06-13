@@ -62,12 +62,6 @@ func Board_to_html(board map[string]string) string {
 	return html
 }
 
-// func Stats_to_html(stats []ttpclient.Stat) string{
-// 	for stat := range stats{
-
-// 	}
-// }
-
 func strToCoord(str string) Coord {
 	c := []byte(str)
 	var coord Coord

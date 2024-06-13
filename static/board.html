@@ -1,201 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+    <head>
+        <script
+            src="https://unpkg.com/htmx.org@1.9.12"
+            integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
+            crossorigin="anonymous"
+        ></script>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="board.css" />
+        <title>Document</title>
+    </head>
 
-<head>
-  <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="board.css">
-  <title>Document</title>
-</head>
+    <body>
+        <div hx-post="/check_turn" hx-trigger="every 200ms"></div>
+        <div id="boards">
+            <div id="enemy">
+                <div hx-post="/enemyInfo" hx-trigger="every 2s"></div>
+                <div class="board" id="enemy-board"></div>
+            </div>
+            <h1 hx-post="/timeLeft" hx-trigger="every 1s"></h1>
+            <div id="player">
+                <div hx-post="/playerInfo" hx-trigger="every 2s"></div>
+                <div
+                    id="player-board"
+                    class="board"
+                    hx-post="/player_board"
+                    hx-trigger="every 200ms"
+                    hx-swap="innerHTML"
+                ></div>
+            </div>
+        </div>
+        <div id="abandon" hx-post="/abandon">Abandon game</div>
+        <div id="shotStat" hx-post="/shotStats" hx-trigger="every 1s">
+            Stats
+        </div>
 
-<body>
+        <script>
+            const PLAYER_BOARD_ID = "player-board";
+            const ENEMY_BOARD_ID = "enemy-board";
 
-  <div hx-post="/check_turn" hx-trigger="every 200ms"></div>
-  <div id="boards">
-    <div id="enemy">
-<<<<<<< HEAD
-      <h1>Wpbot</h1>
-      <h2>Latający Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugit ut veritatis error natus delectus enim sunt voluptatibus quidem. Praesentium, optio.</h2>
-      <!-- <div class="board" hx-post="/enemy_board" hx-trigger="every 5s" hx-swap="innerHTML"> -->
-        <div class="board">
-        <div class="row">
-          <div name="A1" hx-post="/fire">
-            A1
-          </div>
-          <div name="A2" hx-post="/fire">
-            A2
-          </div>
-          <div name="A3" hx-post="/fire">A3</div>
-          <div name="A4" hx-post="/fire">A4</div>
-          <div name="A5" hx-post="/fire">A5</div>
-          <div name="A6" hx-post="/fire">A6</div>
-          <div name="A7" hx-post="/fire">A7</div>
-          <div name="A8" hx-post="/fire">A8</div>
-          <div name="A9" hx-post="/fire">A9</div>
-          <div name="A10" hx-post="/fire">A10</div>
-        </div>
-        <div class="row">
-          <div name="B1" hx-post="/fire">B1</div>
-          <div name="B2" hx-post="/fire">B2</div>
-          <div name="B3" hx-post="/fire">B3</div>
-          <div name="B4" hx-post="/fire">B4</div>
-          <div name="B5" hx-post="/fire">B5</div>
-          <div name="B6" hx-post="/fire">B6</div>
-          <div name="B7" hx-post="/fire">B7</div>
-          <div name="B8" hx-post="/fire">B8</div>
-          <div name="B9" hx-post="/fire">B9</div>
-          <div name="B10" hx-post="/fire">B10</div>
-        </div>
-        <div class="row">
-          <div name="C1" hx-post="/fire">C1</div>
-          <div name="C2" hx-post="/fire">C2</div>
-          <div name="C3" hx-post="/fire">C3</div>
-          <div name="C4" hx-post="/fire">C4</div>
-          <div name="C5" hx-post="/fire">C5</div>
-          <div name="C6" hx-post="/fire">C6</div>
-          <div name="C7" hx-post="/fire">C7</div>
-          <div name="C8" hx-post="/fire">C8</div>
-          <div name="C9" hx-post="/fire">C9</div>
-          <div name="C10" hx-post="/fire">C10</div>
-        </div>
-        <div class="row">
-          <div name="D1" hx-post="/fire">D1</div>
-          <div name="D2" hx-post="/fire">D2</div>
-          <div name="D3" hx-post="/fire">D3</div>
-          <div name="D4" hx-post="/fire">D4</div>
-          <div name="D5" hx-post="/fire">D5</div>
-          <div name="D6" hx-post="/fire">D6</div>
-          <div name="D7" hx-post="/fire">D7</div>
-          <div name="D8" hx-post="/fire">D8</div>
-          <div name="D9" hx-post="/fire">D9</div>
-          <div name="D10" hx-post="/fire">D10</div>
-        </div>
-        <div class="row">
-          <div name="E1" hx-post="/fire">E1</div>
-          <div name="E2" hx-post="/fire">E2</div>
-          <div name="E3" hx-post="/fire">E3</div>
-          <div name="E4" hx-post="/fire">E4</div>
-          <div name="E5" hx-post="/fire">E5</div>
-          <div name="E6" hx-post="/fire">E6</div>
-          <div name="E7" hx-post="/fire">E7</div>
-          <div name="E8" hx-post="/fire">E8</div>
-          <div name="E9" hx-post="/fire">E9</div>
-          <div name="E10" hx-post="/fire">E10</div>
-        </div>
-        <div class="row">
-          <div name="F1" hx-post="/fire">F1</div>
-          <div name="F2" hx-post="/fire">F2</div>
-          <div name="F3" hx-post="/fire">F3</div>
-          <div name="F4" hx-post="/fire">F4</div>
-          <div name="F5" hx-post="/fire">F5</div>
-          <div name="F6" hx-post="/fire">F6</div>
-          <div name="F7" hx-post="/fire">F7</div>
-          <div name="F8" hx-post="/fire">F8</div>
-          <div name="F9" hx-post="/fire">F9</div>
-          <div name="F10" hx-post="/fire">F10</div>
-        </div>
-        <div class="row">
-          <div name="G1" hx-post="/fire">G1</div>
-          <div name="G2" hx-post="/fire">G2</div>
-          <div name="G3" hx-post="/fire">G3</div>
-          <div name="G4" hx-post="/fire">G4</div>
-          <div name="G5" hx-post="/fire">G5</div>
-          <div name="G6" hx-post="/fire">G6</div>
-          <div name="G7" hx-post="/fire">G7</div>
-          <div name="G8" hx-post="/fire">G8</div>
-          <div name="G9" hx-post="/fire">G9</div>
-          <div name="G10" hx-post="/fire">G10</div>
-        </div>
-        <div class="row">
-          <div name="H1" hx-post="/fire">H1</div>
-          <div name="H2" hx-post="/fire">H2</div>
-          <div name="H3" hx-post="/fire">H3</div>
-          <div name="H4" hx-post="/fire">H4</div>
-          <div name="H5" hx-post="/fire">H5</div>
-          <div name="H6" hx-post="/fire">H6</div>
-          <div name="H7" hx-post="/fire">H7</div>
-          <div name="H8" hx-post="/fire">H8</div>
-          <div name="H9" hx-post="/fire">H9</div>
-          <div name="H10" hx-post="/fire">H10</div>
-        </div>
-        <div class="row">
-          <div name="I1" hx-post="/fire">I1</div>
-          <div name="I2" hx-post="/fire">I2</div>
-          <div name="I3" hx-post="/fire">I3</div>
-          <div name="I4" hx-post="/fire">I4</div>
-          <div name="I5" hx-post="/fire">I5</div>
-          <div name="I6" hx-post="/fire">I6</div>
-          <div name="I7" hx-post="/fire">I7</div>
-          <div name="I8" hx-post="/fire">I8</div>
-          <div name="I9" hx-post="/fire">I9</div>
-          <div name="I10" hx-post="/fire">I10</div>
-        </div>
-        <div class="row">
-          <div name="J1" hx-post="/fire">J1</div>
-          <div name="J2" hx-post="/fire">J2</div>
-          <div name="J3" hx-post="/fire">J3</div>
-          <div name="J4" hx-post="/fire">J4</div>
-          <div name="J5" hx-post="/fire">J5</div>
-          <div name="J6" hx-post="/fire">J6</div>
-          <div name="J7" hx-post="/fire">J7</div>
-          <div name="J8" hx-post="/fire">J8</div>
-          <div name="J9" hx-post="/fire">J9</div>
-          <div name="J10" hx-post="/fire">J10</div>
-        </div>
-=======
-      <div hx-post="/enemyInfo" hx-trigger="every 2s">
->>>>>>> fkonkol-generate_boards_dynamically
-      </div>
-      <div class="board" id="enemy-board"></div>
-    </div>
-    <h1 hx-post="/timeLeft" hx-trigger="every 1s"></h1>
-    <div id="player" >
-      <div hx-post="/playerInfo" hx-trigger="every 2s">
-      </div>
-      <div id="player-board" class="board" hx-post="/player_board" hx-trigger="every 200ms" hx-swap="innerHTML"></div>
-    </div>
-  </div>
-<div id="abandon" hx-post="/abandon" >Abandon game</div>
-<div id="shotStat" hx-post="/shotStats" hx-trigger="every 1s">Stats</div>
+            const playerBoard = document.getElementById(PLAYER_BOARD_ID);
+            const enemyBoard = document.getElementById(ENEMY_BOARD_ID);
 
-  <script>
-    const PLAYER_BOARD_ID = 'player-board';
-    const ENEMY_BOARD_ID = 'enemy-board';
+            function generateBoard(board) {
+                [..."ABCDEFGHIJ"].forEach((letter) => {
+                    const row = document.createElement("div");
+                    row.classList.add("row");
 
-    const playerBoard = document.getElementById(PLAYER_BOARD_ID);
-    const enemyBoard = document.getElementById(ENEMY_BOARD_ID);
+                    board.appendChild(row);
 
-    function generateBoard(board) {
-      [...'ABCDEFGHIJ'].forEach((letter) => {
-        const row = document.createElement('div');
-        row.classList.add('row');
+                    Array.from({ length: 10 }, (_, i) => i + 1).forEach(
+                        (digit) => {
+                            const identifier = `${letter}${digit}`;
 
-        board.appendChild(row);
+                            const cell = document.createElement("div");
+                            cell.innerText = identifier;
 
-        Array
-          .from({ length: 10 }, (_, i) => i + 1)
-          .forEach((digit) => {
-            const identifier = `${letter}${digit}`;
+                            if (board.id === ENEMY_BOARD_ID) {
+                                cell.setAttribute("name", identifier);
+                                cell.setAttribute("hx-post", "/fire");
+                            }
 
-            const cell = document.createElement('div');
-            cell.innerText = identifier;
-
-            if (board.id === ENEMY_BOARD_ID) {
-              cell.setAttribute('name', identifier);
-              cell.setAttribute('hx-post', '/fire');
+                            row.appendChild(cell);
+                        },
+                    );
+                });
             }
 
-            row.appendChild(cell);
-          }
-        );
-      });
-    }
-
-    generateBoard(playerBoard);
-    generateBoard(enemyBoard);
-  </script>
-
-</body>
-
+            generateBoard(playerBoard);
+            generateBoard(enemyBoard);
+        </script>
+    </body>
 </html>

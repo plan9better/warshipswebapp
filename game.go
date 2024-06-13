@@ -33,7 +33,6 @@ func updateBoard(p *player) {
 	p.P.Unlock()
 }
 
-<<<<<<< HEAD
 func updateEnemyBoard(e *enemy) {
 
 	// sink entire ships not just the last part
@@ -54,7 +53,7 @@ func updateEnemyBoard(e *enemy) {
 			tries++
 		}
 	}
-=======
+}
 func player_player(httpc *httpclient.HttpClient, p *player) {
 	get_player_ships(httpc, p)
 	updateStatus(httpc, p)
@@ -70,7 +69,6 @@ func player_player(httpc *httpclient.HttpClient, p *player) {
 		time.Sleep(1 * time.Second)
 	}
 	updateBoard(p)
->>>>>>> fkonkol-generate_boards_dynamically
 }
 
 func player_bot(httpc *httpclient.HttpClient, p *player) {
