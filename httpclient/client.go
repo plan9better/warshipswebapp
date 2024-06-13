@@ -11,21 +11,7 @@ import (
 )
 
 const MAX_TRIES = 5
-
-type HttpClient struct {
-	Client    *http.Client
-	AuthToken string
-}
-
-type GameStatus struct {
-	Nick           string   `json:"nick"`
-	GameStatus     string   `json:"game_status"`
-	LastGameStatus string   `json:"last_game_status"`
-	Opponent       string   `json:"opponent"`
-	OpponentShots  []string `json:"opp_shots"`
-	Timer          int      `json:"timer"`
-	ShouldFire     bool     `json:"should_fire"`
-}
+const TIMEOUT = 5
 
 func (c *HttpClient) makeRequest(endpoint string, v any, method string, payload io.Reader) error {
 	address := fmt.Sprintf("https://go-pjatk-server.fly.dev/api/%s", endpoint)
@@ -38,42 +24,45 @@ func (c *HttpClient) makeRequest(endpoint string, v any, method string, payload 
 
 	req.Header.Add("X-Auth-Token", c.AuthToken)
 
-	tries := 1
 	var body []byte
+
 	isCritical := false
-	for !isCritical {
-		// log.Println("Making a request to ", endpoint)
+	for tries := 1; (tries <= MAX_TRIES) && (!isCritical); tries++ {
 		resp, err := c.Client.Do(req)
 		if err != nil {
 			log.Printf("Error sending a get request to %s\n", endpoint)
 			log.Printf("Error: %s\n", err)
-			return err
+			continue
 		}
 		defer resp.Body.Close()
+
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Error reading response body from request to %s\n", endpoint)
 			log.Printf("Error: %s\n", err)
-			return err
+			continue
 		}
+
 		if resp.StatusCode != 200 {
-			isCritical = handleHTTPCodes(resp.StatusCode, body, tries, endpoint)
-			tries++
-		} else {
-			err = json.Unmarshal(body, &v)
-			if err != nil {
-				log.Printf("Error unmarshaling JSON response: %s\n", err)
-				return err
-			}
-			break
+			isCritical = handleHTTPCodes(resp.StatusCode, body, endpoint)
+			continue
 		}
+
+		err = json.Unmarshal(body, &v)
+		if err != nil {
+			log.Printf("Error unmarshaling JSON response: %s\n", err)
+			continue
+		}
+		return nil
+
 	}
 
-	return nil
+	log.Println("Failed after ", MAX_TRIES, " tries., ", endpoint)
+	return err
 
 }
 
-func handleHTTPCodes(code int, body []byte, tries int, endpoint string) bool {
+func handleHTTPCodes(code int, body []byte, endpoint string) bool {
 	log.Printf("_______________________________________\n")
 	log.Printf("HTTP Code %d while requesting %s\n", code, endpoint)
 	if string(body) == "" {
@@ -86,27 +75,36 @@ func handleHTTPCodes(code int, body []byte, tries int, endpoint string) bool {
 	switch code {
 	case 400:
 		log.Printf("Bad request\n")
-		isCritical = true
+
+		// Check if the bad request is because not your turn
+		// if so wait 1 second and then try again
+		if string(body) == `{"message":"not your turn"}` {
+			isCritical = false
+			time.Sleep(time.Second)
+		} else {
+			isCritical = true
+		}
+
 	case 404:
 		log.Printf("Not found")
 		isCritical = true
 	case 401:
 		log.Printf("No auth")
 		isCritical = true
+
+	// Commented out since 503 is supposed
+	// to simulate an unexpected error
+	//
 	// case 503:
 	// 	log.Println("tries: ", tries)
 	// 	isCritical = false
 	case 429:
-		// Too many requests
-		time.Sleep(5 * time.Second)
+		// too many requests
+		time.Sleep(TIMEOUT * time.Second)
 		isCritical = false
 	default:
-		log.Println("Unexpexted error, retrying: ", tries)
+		log.Println("Unexpexted error, retrying...")
 		isCritical = false
-	}
-	if tries >= MAX_TRIES {
-		log.Fatal("Failed after ", MAX_TRIES, " tries. Exiting")
-		isCritical = true
 	}
 	return isCritical
 }
@@ -114,51 +112,27 @@ func handleHTTPCodes(code int, body []byte, tries int, endpoint string) bool {
 func (c *HttpClient) GetGameStatus() (GameStatus, error) {
 	var status GameStatus
 	err := c.makeRequest("game", &status, "GET", nil)
-	tryCounter := 1
-	for err != nil && tryCounter < 5 {
-		log.Printf("Error getting game status: %s, retrying %d time\n", err, tryCounter)
-		err = c.makeRequest("game", &status, "GET", nil)
+
+	for err != nil {
+		log.Println("Error getting game status: ", err)
 		return status, err
 	}
 
 	return status, nil
 }
 
-type GameConfig struct {
-	Wpbot  bool   `json:"wpbot"`
-	Desc   string `json:"desc"`
-	Nick   string `json:"nick"`
-	Coords []byte `json:"coords"`
-	Target string `json:"target_nick"`
-}
-
-type Desc struct {
-	Desc     string `json:"desc"`
-	Nick     string `json:"nick"`
-	Opp_Desc string `json:"opp_desc"`
-	Opponent string `json:"opponent"`
-}
-
 func (c *HttpClient) GetDesc() (Desc, error) {
-	time.Sleep(3 * time.Second)
 	var desc Desc
-	tryCounter := 1
-	for desc.Opp_Desc == "" && tryCounter < 5 {
+
+	for desc.Opp_Desc == "" {
+		time.Sleep(time.Second)
 		err := c.makeRequest("game/desc", &desc, "GET", nil)
 		if err != nil {
 			log.Println("Error getting description: ", err)
 			return desc, err
 		}
-		tryCounter++
-		time.Sleep(3 * time.Second)
-
 	}
 	return desc, nil
-}
-
-type Player struct {
-	GameStatus string `json:"game_status"`
-	Nick       string `json:"nick"`
 }
 
 func (c *HttpClient) GetLobby() []Player {
@@ -171,35 +145,38 @@ func (c *HttpClient) GetLobby() []Player {
 }
 
 func (c *HttpClient) GetAuthToken(cfg *GameConfig) (string, error) {
-	bm, err := json.Marshal(cfg)
-	if err != nil {
-		log.Fatal("Error marshaling request for auth token", err)
-		return "", err
-	}
-	log.Println(string(bm))
-
-	req, err := http.NewRequest("POST", "https://go-pjatk-server.fly.dev/api/game", bytes.NewReader(bm))
-	if err != nil {
-		log.Println("Error creating a request", err)
-		return "", err
-	}
-
-	tries := 1
-	isCritical := false
 	var resp *http.Response
-	for !isCritical {
+
+	isCritical := false
+	for tries := 1; (tries <= MAX_TRIES) && (!isCritical); tries++ {
+		bm, err := json.Marshal(cfg)
+		if err != nil {
+			log.Println("Error marshaling request for auth token", err)
+			continue
+		}
+
+		req, err := http.NewRequest("POST", "https://go-pjatk-server.fly.dev/api/game", bytes.NewReader(bm))
+		if err != nil {
+			log.Println("Error creating a request", err)
+			continue
+		}
+
 		req.Header.Set("Content-Type", "application/json")
 		resp, err = c.Client.Do(req)
 		if err != nil {
-			log.Printf("Error sending request to auth\n")
+			log.Println("Error sending request to auth")
+			continue
 		}
+
 		if resp.StatusCode != 200 {
-			isCritical = handleHTTPCodes(resp.StatusCode, nil, tries, "auth")
-		} else {
-			break
+			isCritical = handleHTTPCodes(resp.StatusCode, nil, "auth")
+			continue
 		}
+		return resp.Header.Get("X-Auth-Token"), nil
 	}
-	return resp.Header.Get("X-Auth-Token"), nil
+
+	log.Fatal("Error creating auth token, the game cannot continue")
+	return "", nil
 
 }
 
@@ -209,28 +186,20 @@ func (c *HttpClient) RefreshWaitSession() {
 		log.Println("Error creating a request to refresh", err)
 	}
 	req.Header.Add("X-Auth-Token", c.AuthToken)
-	tries := 1
-	isCritical := false
+
 	var resp *http.Response
-	for !isCritical {
+	isCritical := false
+	for tries := 1; (tries <= MAX_TRIES) && (!isCritical); tries++ {
 		resp, err = c.Client.Do(req)
 		if err != nil {
 			log.Printf("Error sending request to refresh\n")
 		}
 		if resp.StatusCode != 200 {
-			isCritical = handleHTTPCodes(resp.StatusCode, nil, tries, "auth")
+			isCritical = handleHTTPCodes(resp.StatusCode, nil, "auth")
 		} else {
 			break
 		}
 	}
-}
-
-type Stat struct {
-	Games  int    `json:"games"`
-	Nick   string `json:"nick"`
-	Points int    `json:"points"`
-	Rank   int    `json:"rank"`
-	Wins   int    `json:"wins"`
 }
 
 func (c *HttpClient) Stats() []Stat {
